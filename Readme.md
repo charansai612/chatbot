@@ -19,6 +19,8 @@ check out **requirements.txt and nltk.txt**
 
 1. Run app.py
 
+**Notebook can be found on notebook branch**
 
+![chat_ui](/src/chat_ui.png)
 
 
