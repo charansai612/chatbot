@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # importing required libaries
 import pandas as pd
 import numpy as np
@@ -7,19 +5,14 @@ import re
 import nltk
 from nltk.stem import WordNetLemmatizer
 from nltk import pos_tag
-from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import pairwise_distances
-from sklearn.feature_extraction.text import TfidfVectorizer
+import pickle
 
 # read data
 df = pd.read_excel('./data/chat_bot.xlsx')
 print("Reading Data")
 
-# dropping null
-df.dropna(inplace=True)
-print("Dropping NaN")
-
-#initialze lemmatizer
+# initalize lemmatizer
 lemmatizer = WordNetLemmatizer()
 
 # text_normalization
@@ -45,42 +38,6 @@ def text_normalize(text):
     except:
         pass
 
-print("In the Halfway....")
-
-# applying
-df['lemmatized'] = df['Context'].apply(text_normalize)
-
-#initialze
-cv = CountVectorizer()
-
-#bow
-df_lema = df['lemmatized']
-
-X = cv.fit_transform(df_lema).toarray()
-
-# tfidf
-tfidf = TfidfVectorizer()
-
-def we_tfidf(lemmatized):
-    X_tfid = tfidf.fit_transform(lemmatized).toarray()
-    return X_tfid
-
-# applying tfidf
-x_tfid = we_tfidf(df.lemmatized)
-
-print("Preprocessing done")
-
-# query flittering
-def query(string):
-    #string = input("Enter Query:")
-    clean = text_normalize(string)
-    clean_bow = tfidf.transform([clean]).toarray()
-    return clean_bow
-
-#ask query
-print("Test Bot")
-query_ask = query("Hello")
-
 # cross validation and reply
 def validation(x_tfid,query_ask):
     cos = 1 - pairwise_distances(x_tfid,query_ask,metric='cosine')
@@ -93,11 +50,11 @@ def validation(x_tfid,query_ask):
     
     return result
 
-# Reply
-validation(x_tfid,query_ask)
+# load pickel
+tfidf = pickle.load(open("model/tfidf.pkl","rb"))
+x_tfid = pickle.load(open("model/x_tfidf.pkl","rb"))
 
-print("Done Training...")
-
+#make flask ready
 from flask import Flask, render_template, request, url_for
 
 app = Flask(__name__)
@@ -105,12 +62,10 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
-@app.route('/process',methods=['POST'])
+@app.route('/process',methods=['GET', 'POST'])
 def process():
     user_input = request.form['user_input']
-    query_ask = query(user_input)
+    query_ask = text_normalize(user_input)
+    query_ask = tfidf.transform([query_ask]).toarray()
     response = validation(x_tfid,query_ask)
     return render_template('index.html',user_input=user_input,bot_response=response)
-
-if __name__=='__main__':
-	app.run(debug=True)
