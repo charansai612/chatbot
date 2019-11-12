@@ -14,12 +14,7 @@
 
 check out **requirements.txt and nltk.txt**
 
-## Running Flask
-> make sure you have installed required libaries before running the app.py
-
-1. Run app.py
-
-**Notebook can be found on notebook branch**
+[Heroku](https://bottrained.herokuapp.com/)
 
 ![chat_ui](/src/chat_ui.png)
 
